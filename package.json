@@ -1,0 +1,22 @@
+{
+  "name": "web322-app-2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arshiyachallana/web322-app-2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arshiyachallana/web322-app-2/issues"
+  },
+  "homepage": "https://github.com/arshiyachallana/web322-app-2#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
