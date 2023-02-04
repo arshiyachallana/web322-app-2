@@ -9,7 +9,11 @@
 var HTTP_PORT = 8080;
 var express = require("express");
 var app = express();
-app.get("/", (req, res) => {
-    res.send("Arshiya challana - 154101216");
+const path = require('path');
+const router = express.Router();
+app.use(express.static('public'))
+router.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname + '/views/about.html'));
 });
+app.use('/', router);
 app.listen(HTTP_PORT);
