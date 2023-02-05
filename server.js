@@ -3,11 +3,11 @@
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
 *  (including 3rd party web sites) or distributed to other students.
 * 
-*  Name: ______________________ Student ID: ______________ Date: ________________
+*  Name: Arshiya challana Student ID: 154101216 Date: 05/02/2023
 *
-*  Cyclic Web App URL: ________________________________________________________
+*  Cyclic Web App URL: https://sore-plum-centipede-hat.cyclic.app
 *
-*  GitHub Repository URL: ______________________________________________________
+*  GitHub Repository URL: https://github.com/arshiyachallana/web322-app-2
 *
 ********************************************************************************/ 
 var HTTP_PORT = 8080;
