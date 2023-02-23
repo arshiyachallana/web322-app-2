@@ -1,9 +1,9 @@
 /*********************************************************************************
-*  WEB322 – Assignment 02
+*  WEB322 – Assignment 03
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
 *  (including 3rd party web sites) or distributed to other students.
 * 
-*  Name: Arshiya challana Student ID: 154101216 Date: 05/02/2023
+*  Name: Arshiya challana Student ID: 154101216 Date: 23/02/2023
 *
 *  Cyclic Web App URL: https://sore-plum-centipede-hat.cyclic.app
 *
@@ -63,18 +63,7 @@ router.get("/posts", (req, res) => {
     });
     }
 });
-router.get("/posts/:id", (req, res) => {
-    if (req.params.id)
-        BS.getPostById(req.params.id).then((data) => {
-            res.json({ data: data });
-        }).catch((err) => {
-            res.send({ message: err?.message });
-        });
-    else {
-        res.sendFile(path.join(__dirname + '/views/404Error.html'));
-    }
 
-});
 router.get("/categories", (req, res) => {
     BS.getCategories().then((data) => {
         res.json({ data: data });
@@ -123,6 +112,18 @@ router.post('/posts/add', upload.single('featureImage'), function (req, res, nex
             res.send({ message: err?.message });
         });
     }
+});
+router.get("/posts/:id", (req, res) => {
+    if (req.params.id)
+        BS.getPostById(req.params.id).then((data) => {
+            res.json({ data: data });
+        }).catch((err) => {
+            res.send({ message: err?.message });
+        });
+    else {
+        res.sendFile(path.join(__dirname + '/views/404Error.html'));
+    }
+
 });
 BS.initialize().then(() => {
     app.use('/', router);
