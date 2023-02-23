@@ -21,28 +21,55 @@ module.exports = class BlogSerice {
     }
     async getAllPosts() {
         if (this.posts?.length > 0) {
-            return this.posts;
+            return Promise.resolve(this.posts);
+        } else {
+            return Promise.reject(new Error('no results returned'));
+        }
+    }
+    async getPostsByCategory(category) {
+        if (this.posts.filter((e) => e.category === parseInt(category))?.length > 0) {
+            return Promise.resolve(this.posts.filter((e) => e.category === parseInt(category)));
+        } else {
+            return Promise.reject(new Error('no results returned'));
+        }
+    }
+    async getPostsByMinDate(minDateStr) {
+        if (this.posts.filter((e) => new Date(e.postDate) >= new Date(minDateStr))?.length > 0) {
+            return Promise.resolve(this.posts.filter((e) => new Date(e.postDate) >= new Date(minDateStr)));
+        } else {
+            return Promise.reject(new Error('no results returned'));
+        }
+    }
+    async getPostById(id) {
+        if (this.posts.find((e) => e.id === parseInt(id))) {
+            return Promise.resolve(this.posts.find((e) => e.id === parseInt(id)));
         } else {
             return Promise.reject(new Error('no results returned'));
         }
     }
     async getPublishedPosts() {
         if (this.posts?.length > 0) {
-            return this.posts.filter((e) => e.published === true);
+            return Promise.resolve(this.posts.filter((e) => e.published === true));
         } else {
             return Promise.reject(new Error('no results returned'));
         }
     }
     async getCategories() {
         if (this.categories?.length > 0) {
-            return this.categories;
+            return Promise.resolve(this.categories);
         } else {
             return Promise.reject(new Error('no results returned'));
         }
     }
     async addPost(postData) {
         if (postData) {
-            return this.posts.push({ ...postData, ...{ id: this.posts.length + 1, published: postData.published ? true : false } })
+            return Promise.resolve(this.posts.push({
+                ...postData, ...{
+                    id: this.posts.length + 1,
+                    published: postData.published ? true : false,
+                    postDate: new Date().toISOString().split('T')[0]
+                }
+            }))
         } else {
             return Promise.reject(new Error('no results returned'));
         }

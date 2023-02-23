@@ -43,11 +43,37 @@ router.get("/blog", (req, res) => {
     });
 });
 router.get("/posts", (req, res) => {
+    if (req.query?.category) {
+        BS.getPostsByCategory(req.query?.category).then((data) => {
+            res.json({ data: data });
+        }).catch((err) => {
+            res.send({ message: err?.message });
+        });
+    } else if (req.query?.minDate) {
+        BS.getPostsByMinDate(req.query?.minDate).then((data) => {
+            res.json({ data: data });
+        }).catch((err) => {
+            res.send({ message: err?.message });
+        });
+    } else {
     BS.getAllPosts().then((data) => {
         res.json({ data: data });
     }).catch((err) => {
         res.send({ message: err?.message });
     });
+    }
+});
+router.get("/posts/:id", (req, res) => {
+    if (req.params.id)
+        BS.getPostById(req.params.id).then((data) => {
+            res.json({ data: data });
+        }).catch((err) => {
+            res.send({ message: err?.message });
+        });
+    else {
+        res.sendFile(path.join(__dirname + '/views/404Error.html'));
+    }
+
 });
 router.get("/categories", (req, res) => {
     BS.getCategories().then((data) => {
