@@ -40,4 +40,11 @@ module.exports = class BlogSerice {
             return Promise.reject(new Error('no results returned'));
         }
     }
+    async addPost(postData) {
+        if (postData) {
+            return this.posts.push({ ...postData, ...{ id: this.posts.length + 1, published: postData.published ? true : false } })
+        } else {
+            return Promise.reject(new Error('no results returned'));
+        }
+    }
 }

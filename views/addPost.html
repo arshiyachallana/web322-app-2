@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-  <title>About</title>
+  <title>Add Post</title>
 </head>
 
 <body>
@@ -29,32 +29,36 @@
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
           <li><a href="/blog">Blog</a></li>
-          <li class="active"><a href="/about">About</a></li>
+          <li><a href="/about">About</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="/posts">Post</a></li>
           <li><a href="/categories">Categories</a></li>
-          <li><a href="/posts/add">Add Post</a></li>
+          <li class="active"><a href="/posts/add">Add Post</a></li>
         </ul>
       </div>
-      </div>
+    </div>
   </nav>
-  <div class="container" style="padding-top:60px">
+  <div class="container" style="padding-top:100px">
     <div class="row">
-      <section class="main col-md-9">
-        <article>
-          <h2>About</h2>
-          <p>I'm now enrolled in Seneca College's two-year diploma program in computer programming.</p>
-          <p>I enjoy exploring new places, trying local cuisine, and meeting new people.</p>
-          <p>I belive that the more I socialise the more I learn .</p>
-          <p>The jewellery industry is another area I'm becoming interested in these days because I work at Michael Hill Jewellers.</p>
-          <p>My ultimate ambition in life is to become a prosperous entrepreneur and start my own jewellery business.</p>
-        </article>
-      </section>
-      <aside class="col-md-3">
-        <h2>Coming Soon</h2>
-        <p class="p-italic">Stay tuned for future updates…</p>
-      </aside>
+      <form action="/posts/add" method="POST" class="pt-1" enctype="multipart/form-data">
+        <div class="form-group">
+          <input required class="form-control" placeholder="Title" name="title">
+        </div>
+        <div class="form-group">
+          <input required class="form-control" placeholder="Body" name="body">
+        </div>
+        <div class="form-group">
+          <input required type="number" class="form-control" name="category" placeholder="Category">
+        </div>
+        <div class="form-group">
+          <input required type="file" id="file" accept="image/png, image/jpeg" class="form-control" name="featureImage" placeholder="Image">
+        </div>
+        <div class="form-group">
+          <input type="checkbox" name="published"><label for="vehicle1"> Published</label>
+        </div>
+        <button type="submit" class="btn btn-success rounded-pill">Submit</button>
+      </form>
     </div>
   </div>
 
