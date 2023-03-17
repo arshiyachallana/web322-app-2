@@ -1,5 +1,5 @@
 /*********************************************************************************
-*  WEB322 – Assignment 03
+*  WEB322 – Assignment 04
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
 *  (including 3rd party web sites) or distributed to other students.
 * 
@@ -12,11 +12,38 @@
 ********************************************************************************/
 var HTTP_PORT = 8080;
 var express = require("express");
+var engine = require("express-handlebars").engine;
 var app = express();
 const path = require('path');
 const router = express.Router();
-app.use(express.urlencoded({ extended: true }));
+const stripJs = require('strip-js')
+app.engine('.hbs', engine({
+    extname: '.hbs',
+    helpers: {
+        navLink: function (url, options) {
+            return '<li' +
+                ((url == app.locals.activeRoute) ? ' class="active" ' : '') +
+                '><a href="' + url + '">' + options.fn(this) + '</a></li>';
+        },
+        equal: function (lvalue, rvalue, options) {
+            if (arguments.length < 3)
+                throw new Error("Handlebars Helper equal needs 2 parameters");
+            if (lvalue != rvalue) {
+                return options.inverse(this);
+            } else {
+                return options.fn(this);
+            }
+        },
+        safeHTML: function (context) {
+            return stripJs(context);
+        }
+    }
+}));
+app.set('view engine', '.hbs');
+app.set('views', './views');
 app.use(express.static('public'))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
 const BlogSerice = require("./blog-service")
 const BS = new BlogSerice()
 const multer = require("multer");
@@ -30,49 +57,93 @@ cloudinary.config({
 });
 const upload = multer()
 router.get("/", (req, res) => {
-    res.redirect("/about");
+    res.redirect("/blog");
 });
 router.get("/about", (req, res) => {
-    res.sendFile(path.join(__dirname + '/views/about.html'));
+    res.render('about');
 });
-router.get("/blog", (req, res) => {
-    BS.getPublishedPosts().then((data) => {
-        res.json({ data: data });
-    }).catch((err) => {
-        res.send({ message: err?.message });
-    });
+router.get('/blog', async (req, res) => {
+    let viewData = {};
+    try {
+        let posts = [];
+        if (req.query.category) {
+            posts = await BS.getPublishedPostsByCategory(req.query.category);
+        } else {
+            posts = await BS.getPublishedPosts();
+        }
+        posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+        let post = posts[0];
+        viewData.posts = posts;
+        viewData.post = post;
+    } catch (err) {
+        viewData.message = "no results";
+    }
+    try {
+        let categories = await BS.getCategories();
+        viewData.categories = categories;
+    } catch (err) {
+        viewData.categoriesMessage = "no results"
+    }
+    res.render("blog", { data: viewData })
+});
+router.get('/blog/:id', async (req, res) => {
+    let viewData = {};
+    try {
+        let posts = [];
+        if (req.query.category) {
+            posts = await BS.getPublishedPostsByCategory(req.query.category);
+        } else {
+            posts = await BS.getPublishedPosts();
+        }
+        posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+        viewData.posts = posts;
+    } catch (err) {
+        viewData.message = "no results";
+    }
+    try {
+        viewData.post = await BS.getPostById(req.params.id);
+    } catch (err) {
+        viewData.message = "no results";
+    }
+    try {
+        let categories = await BS.getCategories();
+        viewData.categories = categories;
+    } catch (err) {
+        viewData.categoriesMessage = "no results"
+    }
+    res.render("blog", { data: viewData })
 });
 router.get("/posts", (req, res) => {
     if (req.query?.category) {
         BS.getPostsByCategory(req.query?.category).then((data) => {
-            res.json({ data: data });
+            res.render("posts", { posts: data })
         }).catch((err) => {
-            res.send({ message: err?.message });
+            res.render("posts", { message: "no results" });
         });
     } else if (req.query?.minDate) {
         BS.getPostsByMinDate(req.query?.minDate).then((data) => {
-            res.json({ data: data });
+            res.render("posts", { posts: data })
         }).catch((err) => {
-            res.send({ message: err?.message });
+            res.render("posts", { message: "no results" });
         });
     } else {
-    BS.getAllPosts().then((data) => {
-        res.json({ data: data });
-    }).catch((err) => {
-        res.send({ message: err?.message });
-    });
+        BS.getAllPosts().then((data) => {
+            res.render("posts", { posts: data })
+        }).catch((err) => {
+            res.render("posts", { message: "no results" });
+        });
     }
 });
 
 router.get("/categories", (req, res) => {
     BS.getCategories().then((data) => {
-        res.json({ data: data });
+        res.render("categories", { categories: data })
     }).catch((err) => {
-        res.send({ message: err?.message });
+        res.render("categories", { message: err?.message });
     });
 });
 router.get("/posts/add", (req, res) => {
-    res.sendFile(path.join(__dirname + '/views/addPost.html'));
+    res.render("addPost");
 });
 router.post('/posts/add', upload.single('featureImage'), function (req, res, next) {
     if (req.file) {
@@ -121,18 +192,25 @@ router.get("/posts/:id", (req, res) => {
             res.send({ message: err?.message });
         });
     else {
-        res.sendFile(path.join(__dirname + '/views/404Error.html'));
+        res.render("404Error")
     }
 
 });
 BS.initialize().then(() => {
+    app.use(function (req, res, next) {
+        let route = req.path.substring(1);
+        app.locals.activeRoute = "/" + (isNaN(route.split('/')[1]) ? route.replace(/\/(?!.*)/, "") : route.replace(/\/(.*)/, ""));
+        app.locals.viewingCategory = req.query.category;
+        next();
+
+    });
     app.use('/', router);
     app.listen(HTTP_PORT);
     app.all('*', function (req, res) {
-        res.sendFile(path.join(__dirname + '/views/404Error.html'));
+        res.render("404Error")
     });
 }).catch((err) => {
     console.log("err", err);
-    res.sendFile(path.join(__dirname + '/views/404Error.html'));
+    res.render("404Error")
 })
 

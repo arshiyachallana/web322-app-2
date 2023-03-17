@@ -21,7 +21,7 @@ module.exports = class BlogSerice {
     }
     async getAllPosts() {
         if (this.posts?.length > 0) {
-            return Promise.resolve(this.posts);
+            return Promise.resolve(this.posts.sort((date1, date2) => new Date(date2.postDate) - new Date(date1.postDate)));
         } else {
             return Promise.reject(new Error('no results returned'));
         }
@@ -71,6 +71,13 @@ module.exports = class BlogSerice {
                     category: parseInt(postData.category) || 1
                 }
             }))
+        } else {
+            return Promise.reject(new Error('no results returned'));
+        }
+    }
+    async getPublishedPostsByCategory(category) {
+        if (this.posts?.length > 0) {
+            return Promise.resolve(this.posts.filter((e) => e.published === true && e.category == category));
         } else {
             return Promise.reject(new Error('no results returned'));
         }
