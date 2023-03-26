@@ -1,9 +1,9 @@
 /*********************************************************************************
-*  WEB322 – Assignment 04
+*  WEB322 – Assignment 05
 *  I declare that this assignment is my own work in accordance with Seneca  Academic Policy.  No part *  of this assignment has been copied manually or electronically from any other source 
 *  (including 3rd party web sites) or distributed to other students.
 * 
-*  Name: Arshiya challana Student ID: 154101216 Date: 17/03/2023
+*  Name: Arshiya challana Student ID: 154101216 Date: 27/03/2023
 *
 *  Cyclic Web App URL: https://sore-plum-centipede-hat.cyclic.app
 *
@@ -36,6 +36,12 @@ app.engine('.hbs', engine({
         },
         safeHTML: function (context) {
             return stripJs(context);
+        },
+        formatDate: function (dateObj) {
+            let year = dateObj.getFullYear();
+            let month = (dateObj.getMonth() + 1).toString();
+            let day = dateObj.getDate().toString();
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
         }
     }
 }));
@@ -84,6 +90,7 @@ router.get('/blog', async (req, res) => {
     } catch (err) {
         viewData.categoriesMessage = "no results"
     }
+    console.log("--data", viewData);
     res.render("blog", { data: viewData })
 });
 router.get('/blog/:id', async (req, res) => {
@@ -118,19 +125,19 @@ router.get("/posts", (req, res) => {
         BS.getPostsByCategory(req.query?.category).then((data) => {
             res.render("posts", { posts: data })
         }).catch((err) => {
-            res.render("posts", { message: "no results" });
+            res.render("posts", { message: err });
         });
     } else if (req.query?.minDate) {
         BS.getPostsByMinDate(req.query?.minDate).then((data) => {
             res.render("posts", { posts: data })
         }).catch((err) => {
-            res.render("posts", { message: "no results" });
+            res.render("posts", { message: err });
         });
     } else {
         BS.getAllPosts().then((data) => {
             res.render("posts", { posts: data })
         }).catch((err) => {
-            res.render("posts", { message: "no results" });
+            res.render("posts", { message: err });
         });
     }
 });
@@ -139,11 +146,38 @@ router.get("/categories", (req, res) => {
     BS.getCategories().then((data) => {
         res.render("categories", { categories: data })
     }).catch((err) => {
-        res.render("categories", { message: err?.message });
+        res.render("categories", { message: err });
     });
 });
+router.get("/categories/add", (req, res) => {
+    res.render("addCategories");
+});
+router.post('/categories/add', (req, res) => {
+    console.log('(req.body', req.body);
+    BS.addCategory(req.body).then((data) => {
+        res.redirect("/categories");
+    }).catch((err) => {
+        res.send(err);
+    });
+
+});
+router.get("/categories/delete/:id", (req, res) => {
+    if (req.params.id) {
+        BS.deleteCategoryById(req.params.id).then((data) => {
+            res.redirect("/categories");
+        }).catch((err) => {
+            res.send(err);
+        });
+    } else {
+        res.send({ code: 500, message: " Category not found" });
+    }
+});
 router.get("/posts/add", (req, res) => {
-    res.render("addPost");
+    BS.getCategories().then((data) => {
+        res.render("addPost", { categories: data });
+    }).catch((err) => {
+        res.render("addPost", { categories: [] });
+    });
 });
 router.post('/posts/add', upload.single('featureImage'), function (req, res, next) {
     if (req.file) {
@@ -180,7 +214,7 @@ router.post('/posts/add', upload.single('featureImage'), function (req, res, nex
         BS.addPost(req.body).then((data) => {
             res.redirect("/posts");
         }).catch((err) => {
-            res.send({ message: err?.message });
+            res.send(err);
         });
     }
 });
@@ -189,12 +223,23 @@ router.get("/posts/:id", (req, res) => {
         BS.getPostById(req.params.id).then((data) => {
             res.json({ data: data });
         }).catch((err) => {
-            res.send({ message: err?.message });
+            res.send(err);
         });
     else {
         res.render("404Error")
     }
 
+});
+router.get("/posts/delete/:id", (req, res) => {
+    if (req.params.id) {
+        BS.deletePostById(req.params.id).then((data) => {
+            res.redirect("/posts");
+        }).catch((err) => {
+            res.send(err);
+        });
+    } else {
+        res.send({ code: 500, message: " Post not found" });
+    }
 });
 BS.initialize().then(() => {
     app.use(function (req, res, next) {
@@ -211,6 +256,5 @@ BS.initialize().then(() => {
     });
 }).catch((err) => {
     console.log("err", err);
-    res.render("404Error")
 })
 

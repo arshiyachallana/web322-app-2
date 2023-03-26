@@ -4,7 +4,7 @@
             {{#if data.post}}
             <article>
                 <h2>{{data.post.title}}</h2>
-                <img src="{{data.post.featureImage}}" alt="feature Image" style="width:100%" />
+                <img src="{{data.post.featureImage}}" alt="feature Image" style="height:320px;" />
                 <br /><br />
                 {{#safeHTML data.post.body}}
                 {{/safeHTML}}
@@ -23,13 +23,13 @@
             {{#if data.posts}}
             <ul class="list-group">
                 {{#each data.posts}}
-                <a href="/blog/{{id}}?category={{title}}" class="list-group-item">{{title}}</a>
+                <a href="/blog/{{id}}?category={{category}}" class="list-group-item">{{title}}</a>
                 {{/each}}
             </ul>
 
             {{/if}}
             <h4>Categories</h4>
-            {{#if data.posts}}
+            {{#if data.categories}}
             <ul class="list-group">
                 {{#each data.categories}}
                 <a href="/blog?category={{id}}" class="list-group-item">{{category}}</a>
