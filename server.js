@@ -17,6 +17,9 @@ var app = express();
 const path = require('path');
 const router = express.Router();
 const stripJs = require('strip-js')
+const authData = require('./auth-service');
+const clientSessions = require('client-sessions')
+
 app.engine('.hbs', engine({
     extname: '.hbs',
     helpers: {
@@ -50,6 +53,16 @@ app.set('views', './views');
 app.use(express.static('public'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
+app.use(clientSessions({
+    cookieName: 'session',
+    secret: 'Sessions',
+    duration: 24 * 60 * 60 * 1000,
+    activeDuration: 1000 * 60 * 15
+}));
+app.use(function (req, res, next) {
+    res.locals.session = req.session;
+    next();
+});
 const BlogSerice = require("./blog-service")
 const BS = new BlogSerice()
 const multer = require("multer");
@@ -62,8 +75,58 @@ cloudinary.config({
     secure: true
 });
 const upload = multer()
+function ensureLogin(req, res, next) {
+    if (!req.session.user) {
+        res.redirect('/login');
+    } else {
+        next();
+    }
+}
+
 router.get("/", (req, res) => {
     res.redirect("/blog");
+});
+router.get('/userHistory', ensureLogin, function (req, res) {
+    res.render('userHistory');
+});
+router.get('/logout', function (req, res) {
+    req.session.reset();
+    res.redirect('/');
+});
+router.get("/login", (req, res) => {
+    res.render("login")
+});
+router.post("/login", (req, res) => {
+    req.body.userAgent = req.get('User-Agent')
+    authData.checkUser(req.body)
+        .then(user => {
+            req.session.user = {
+                userName: user.userName,
+                email: user.email,
+                loginHistory: user.loginHistory
+            };
+
+            res.redirect('/posts');
+        })
+        .catch(err => {
+            res.render('login', {
+                errorMessage: err,
+                userName: req.body.userName
+            });
+        });
+});
+router.get("/register", (req, res) => {
+    res.render("register")
+});
+router.post("/register", (req, res) => {
+    req.body.userAgent = req.get('User-Agent')
+    authData.registerUser(req.body)
+        .then(() => {
+            res.render('register', { successMessage: 'User created' });
+        })
+        .catch((err) => {
+            res.render('register', { errorMessage: err, userName: req.body.userName, email: req.body.email });
+        });
 });
 router.get("/about", (req, res) => {
     res.render('about');
@@ -90,7 +153,6 @@ router.get('/blog', async (req, res) => {
     } catch (err) {
         viewData.categoriesMessage = "no results"
     }
-    console.log("--data", viewData);
     res.render("blog", { data: viewData })
 });
 router.get('/blog/:id', async (req, res) => {
@@ -120,7 +182,7 @@ router.get('/blog/:id', async (req, res) => {
     }
     res.render("blog", { data: viewData })
 });
-router.get("/posts", (req, res) => {
+router.get("/posts", ensureLogin, (req, res) => {
     if (req.query?.category) {
         BS.getPostsByCategory(req.query?.category).then((data) => {
             res.render("posts", { posts: data })
@@ -141,19 +203,17 @@ router.get("/posts", (req, res) => {
         });
     }
 });
-
-router.get("/categories", (req, res) => {
+router.get("/categories", ensureLogin, (req, res) => {
     BS.getCategories().then((data) => {
         res.render("categories", { categories: data })
     }).catch((err) => {
         res.render("categories", { message: err });
     });
 });
-router.get("/categories/add", (req, res) => {
+router.get("/categories/add", ensureLogin, (req, res) => {
     res.render("addCategories");
 });
-router.post('/categories/add', (req, res) => {
-    console.log('(req.body', req.body);
+router.post('/categories/add', ensureLogin, (req, res) => {
     BS.addCategory(req.body).then((data) => {
         res.redirect("/categories");
     }).catch((err) => {
@@ -161,7 +221,7 @@ router.post('/categories/add', (req, res) => {
     });
 
 });
-router.get("/categories/delete/:id", (req, res) => {
+router.get("/categories/delete/:id", ensureLogin, (req, res) => {
     if (req.params.id) {
         BS.deleteCategoryById(req.params.id).then((data) => {
             res.redirect("/categories");
@@ -172,14 +232,14 @@ router.get("/categories/delete/:id", (req, res) => {
         res.send({ code: 500, message: " Category not found" });
     }
 });
-router.get("/posts/add", (req, res) => {
+router.get("/posts/add", ensureLogin, (req, res) => {
     BS.getCategories().then((data) => {
         res.render("addPost", { categories: data });
     }).catch((err) => {
         res.render("addPost", { categories: [] });
     });
 });
-router.post('/posts/add', upload.single('featureImage'), function (req, res, next) {
+router.post('/posts/add', ensureLogin, upload.single('featureImage'), function (req, res, next) {
     if (req.file) {
         let streamUpload = (req) => {
             return new Promise((resolve, reject) => {
@@ -218,7 +278,7 @@ router.post('/posts/add', upload.single('featureImage'), function (req, res, nex
         });
     }
 });
-router.get("/posts/:id", (req, res) => {
+router.get("/posts/:id", ensureLogin, (req, res) => {
     if (req.params.id)
         BS.getPostById(req.params.id).then((data) => {
             res.json({ data: data });
@@ -230,7 +290,7 @@ router.get("/posts/:id", (req, res) => {
     }
 
 });
-router.get("/posts/delete/:id", (req, res) => {
+router.get("/posts/delete/:id", ensureLogin, (req, res) => {
     if (req.params.id) {
         BS.deletePostById(req.params.id).then((data) => {
             res.redirect("/posts");
@@ -241,13 +301,12 @@ router.get("/posts/delete/:id", (req, res) => {
         res.send({ code: 500, message: " Post not found" });
     }
 });
-BS.initialize().then(() => {
+BS.initialize().then(authData.initialize).then(() => {
     app.use(function (req, res, next) {
         let route = req.path.substring(1);
         app.locals.activeRoute = "/" + (isNaN(route.split('/')[1]) ? route.replace(/\/(?!.*)/, "") : route.replace(/\/(.*)/, ""));
         app.locals.viewingCategory = req.query.category;
         next();
-
     });
     app.use('/', router);
     app.listen(HTTP_PORT);

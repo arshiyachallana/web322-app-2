@@ -95,7 +95,6 @@ module.exports = class BlogSerice {
                     id: id
                 }
             }).then(function (posts) {
-                console.log("getPostById", posts);
                 if (posts?.length > 0) {
                     resolve(posts[0]);
                 }
@@ -114,7 +113,6 @@ module.exports = class BlogSerice {
                     published: true
                 }
             }).then(function (posts) {
-                console.log("getPublishedPosts", posts);
                 if (posts?.length > 0) {
                     resolve(posts);
                 }
@@ -129,7 +127,6 @@ module.exports = class BlogSerice {
     async getCategories() {
         return new Promise((resolve, reject) => {
             Category.findAll().then(function (Category) {
-                console.log("getCategories", Category);
                 if (Category?.length > 0) {
                     resolve(Category);
                 }
@@ -152,7 +149,6 @@ module.exports = class BlogSerice {
                 postData.postDate = new Date();
                 Post.create(postData)
                     .then(post => {
-                        console.log('Created post:', post.toJSON());
                         resolve(post)
                     })
                     .catch(error => {
@@ -195,10 +191,8 @@ module.exports = class BlogSerice {
                     if (categoryData[property] == undefined)
                         categoryData[property] = ""
                 }
-                console.log("categoryData", categoryData);
                 Category.create(categoryData)
                     .then(Category => {
-                        console.log('Created categoryData:', Category.toJSON());
                         resolve(Category)
                     })
                     .catch(error => {
